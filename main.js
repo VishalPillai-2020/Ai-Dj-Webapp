@@ -1,115 +1,90 @@
-song_1 = "";
-song_2 = "";
-rightwristx = "";
-rightwristy = "";
-leftwristx = "";
-leftwristy = "";
+song = "";
+leftWristX = "";
+leftWristY = "";
+rightWristX = "";
+rightWristY = "";
 score_leftWrist = "";
 score_rightWrist = "";
-song_name_element = document.getElementById("song_name");
-var SpeechRecognition = window.webkitSpeechRecognition;
-var recognition = new SpeechRecognition();
-recognition.continuous = true;
-recognition.lang = 'en-US';
-recognition.interimResults = true;
+volume_info = document.getElementById("volume_info");
+speed_info = document.getElementById("speed_info");
+
 function preload() {
-    song_1 = loadSound("DarkSide.mp3");
-    song_2 = loadSound("Sorry.mp3");
-}
+    song = loadSound("music.mp3");
 
-function showhelp() {
-
-    p_1 = document.getElementById("p_1");
-    p_1.innerHTML = "<span>To play the song Sorry get your left wrist <br>in front of the webcam and to play the song<br> Darkside get your right wrist in front of the webcam </span>";
-}
-
-function disablehelp() {
-    p_1.innerHTML = "Help";
 }
 
 function setup() {
-    start()
     video = createCapture(VIDEO);
     video.hide();
-    canvas = createCanvas(500, 350);
+    canvas = createCanvas(600, 500);
     canvas.center();
     posenet = ml5.poseNet(video, modelLoaded);
     posenet.on('pose', gotPoses);
-
 }
 
 function modelLoaded() {
-    console.log("PoseNet Model Is Initialized");
-
+    console.log("Posenet is Initialized");
 }
 
 function gotPoses(results) {
     if (results.length > 0) {
+
         console.log(results);
-        rightwristx = results[0].pose.rightWrist.x;
-        rightwristy = results[0].pose.rightWrist.y;
-        leftwristx = results[0].pose.leftWrist.x;
-        leftwristy = results[0].pose.leftWrist.y;
+        leftWristX = results[0].pose.leftWrist.x;
+        leftWristY = results[0].pose.leftWrist.y;
+        rightWristX = results[0].pose.rightWrist.x;
+        rightWristY = results[0].pose.rightWrist.y;
         score_leftWrist = results[0].pose.keypoints[9].score;
         score_rightWrist = results[0].pose.keypoints[10].score;
-        console.log("Score of Left Wrist = " + score_leftWrist + " Score of right wrist = " + score_rightWrist);
-        console.log("Right Wrist X = " + rightwristx + " Right Wrist Y = " + rightwristy + " Left Wrist X = " + leftwristx + " Left Wrist Y = " + leftwristy);
-
+        console.log(score_leftWrist);
+        console.log("Left Wrist X = " + leftWristX + " Left Wrist Y = " + leftWristY + " rightWristX = " + rightWristX + " rightWristY = " + rightWristY);
     }
 }
 
 function draw() {
-    image(video, 0, 0, 500, 400);
-    if (score_leftWrist > 0.2 && !song_2.isPlaying()) {
-        song_1.stop();
-        song_2.play();
-        song_name_element.innerHTML = "The Current Playing Song Is 'Sorry'";
+    image(video, 0, 0, 600, 500);
+    fill("grey");
+    stroke("black");
+    if (score_leftWrist > 0.2) {
 
+        circle(leftWristX, leftWristY, 20);
+        leftwristy_number = Number(leftWristY);
+        leftwristy_number = floor(leftwristy_number);
+        divide = leftwristy_number / 500;
+        divide = Number(divide.toFixed(1));
+        volume_info.innerHTML = "volume =  " + divide;
+        if (!song.isPlaying()) {
+            song.play()
 
-    } 
-    else if (score_rightWrist > 0.2 && !song_1.isPlaying()) {
-        song_2.stop();
-        song_1.play();
-        song_name_element.innerHTML = "The Current Playing Song Is 'DarkSide'";
-    
+        }
+        song.setVolume(divide);
+
     }
-}
+    if (score_rightWrist > 0.2) {
+        circle(rightWristX, rightWristY, 20);
+        if (rightWristY > 0 && rightWristY <= 100) {
+            song.rate(0.5);
+            speed_info.innerHTML = "The current speed is 0.5x";
+        } else if (rightWristY > 100 && rightWristY <= 200) {
+            song.rate(1);
+            speed_info.innerHTML = "The current speed is 1x";
+        } else if (rightWristY > 200 && rightWristY <= 300) {
+            song.rate(1.5);
+            speed_info.innerHTML = "The current speed is 1.5x"
+        } else if (rightWristY > 300 && rightWristY <= 400) {
+            song.rate(2);
+            speed_info.innerHTML = "The current speed is 2x"
+        } else if (rightWristY > 400) {
+            song.rate(2.5);
+            speed_info.innerHTML = "The current speed is 2.5x"
+        }
 
-function play_1() {
-    song_name_element.innerHTML = "The Current Playing Song Is";
-    song_2.stop();
-    song_1.stop();
-    song_2.play();
-    song_name_element.innerHTML += " 'Sorry'";
+    }
+
 }
 
 function play() {
-    song_name_element.innerHTML = "The Current Playing Song Is";
-    song_1.stop();
-    song_2.stop();
-    song_1.play();
-    song_name_element.innerHTML += " 'DarkSide'";
+    song.setVolume(1.0);
+    song.rate(1.0);
+    song.play();
 }
-
-
-function start() {
-    recognition.start();
-
-}
-recognition.onresult = function run(event) {
-    console.log(event);
-
-    var Content = event.results[0][0].transcript;
-
-    console.log(Content);
-    if (Content == "Stop" || Content == "stop the song") {
-        stopthesongs ()
-    }
-
-}
-function stopthesongs (){
-    song_1.stop();
-    song_2.stop();
-}
-
-
